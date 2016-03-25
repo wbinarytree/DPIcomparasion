@@ -15,3 +15,19 @@ Plan B
 	Test with our tool
 	
 *join two pcap files or dump files (Ye)
+
+
+To use nDPI tool:
+Install nDPI following instructions from github
+
+To convert from dump to pcap
+	install wireshark to use text2pcap tool
+	Extract .gz and execute
+		> text2pcap -d -e 0x800 dumpFile.dump Output.pcap
+		
+To execute nDPI
+	> cd .../nDPI/example
+	then:
+		> ./ndpiReader -i Output.pcap
+	or
+		> ./ndpiReader -i Output.dump
