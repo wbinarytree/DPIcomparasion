@@ -1,0 +1,17 @@
+Plan A
+	*Run on a virtual machine with promox
+	Using the same pcap file
+		Test nDPI
+		Test lpi_proident
+			*How to retrieve results from lpi like nDPI does
+		Gather results to compare (Use http://mawi.wide.ad.jp/mawi/samplepoint-F/2016/201603011400.html for accuracy)
+															-CPU usage
+															-Accuraccy
+															-Speed
+	Compare results
+
+Plan B
+	Create our reader using nDPI libs
+	Test with our tool
+	
+*join two pcap files or dump files (Ye)
