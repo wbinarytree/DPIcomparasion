@@ -1,0 +1,72 @@
+#!/bin/bash
+# by Paul Colby (http://colby.id.au), no rights reserved.
+# edited by Miguel Angel Jara Maldonado
+#
+# Execute this script as:
+#    ./cpu_usage > output_CPU.txt           To write output to a file
+#    ./cpu_usage | tee "output_CPU.txt"    To write output to a file and to the console
+#    ./cpu_usage | tee -a "output_CPU.txt" To write output to the console and append it to a file instead of overwrite
+#
+
+PREV_TOTAL=0
+PREV_IDLE=0
+
+PREV_TOTAL_MEM=0
+PREV_IDLE_MEM=0
+
+while true; do
+
+ #TIMESTAMP
+  TIMESTAMP=(`date`)
+  unset TIMESTAMP[0]                          # Discard the day prefix.
+  unset TIMESTAMP[1]                          # Discard the day prefix.
+  TIMESTAMP_DAY=${TIMESTAMP[2]}
+  TIMESTAMP_HOUR=${TIMESTAMP[3]}
+  TIMESTAMP_ZONE=${TIMESTAMP[4]}
+  TIMESTAMP_YEAR=${TIMESTAMP[5]}
+
+ #CPU
+  CPU=(`cat /proc/stat | grep '^cpu '`) # Get the total CPU statistics.
+  unset CPU[0]                          # Discard the "cpu" prefix.
+  IDLE=${CPU[4]}                        # Get the idle CPU time.
+
+  # Calculate the total CPU time.
+  TOTAL=0
+
+  for VALUE in "${CPU[@]:0:4}"; do
+    let "TOTAL=$TOTAL+$VALUE"
+  done
+
+  # Calculate the CPU usage since we last checked.
+  let "DIFF_IDLE=$IDLE-$PREV_IDLE"
+  let "DIFF_TOTAL=$TOTAL-$PREV_TOTAL"
+  let "DIFF_USAGE=(1000*($DIFF_TOTAL-$DIFF_IDLE)/$DIFF_TOTAL+5)/10"
+
+
+
+
+ #MEMORY
+  MEM=(`free -m | grep /+`) # Get the total MEM statistics.
+  unset MEM[0]                          # Discard the "-/+" prefix.
+  unset MEM[1]                          # Discard the "buffers/cahe" prefix.
+  IDLE_MEM=${MEM[2]}                        # Get the free Memory.
+  USED_MEM=${MEM[3]}                        # Get the used Memory.
+  
+  
+  echo -en "\rCPU: $DIFF_USAGE%     USED MEM: $USED_MEM     FREE MEM: $IDLE_MEM     $TIMESTAMP_DAY $TIMESTAMP_HOUR $TIMESTAMP_ZONE $TIMESTAMP_YEAR \b\b\n"
+
+
+  # Remember the total and idle CPU times for the next check.
+  PREV_TOTAL_MEM="$TOTAL_MEM"
+  PREV_IDLE_MEM="$IDLE_MEM"
+
+
+
+
+  # Remember the total and idle CPU times for the next check.
+  PREV_TOTAL="$TOTAL"
+  PREV_IDLE="$IDLE"
+
+  # Wait before checking again.
+  sleep 1
+done
