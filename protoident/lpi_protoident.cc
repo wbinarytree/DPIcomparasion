@@ -56,7 +56,6 @@ enum {
 	DIR_METHOD_PORT
 };
 
-
 //caculate the result of filtering
 typedef struct res{
     int length;
@@ -66,6 +65,8 @@ typedef struct res{
     unsigned int server_port[TEST_MAX];
     unsigned int client_port[TEST_MAX];
     char protocol[TEST_MAX][50];
+    uint64_t inputbits[TEST_MAX];
+    uint64_t outputbits[TEST_MAX];
 }res;
 
 int find_protocol_index(res result,const char* proto){
@@ -185,10 +186,16 @@ void display_ident(Flow *f, IdentFlow *ident) {
     int index = find_protocol_index(result,proto->name);
     if(-1 == index){
         strcpy(result.name[result.length],lpi_print(proto->protocol));
-        
+        result.inputbits[result.length] = ident->in_bytes;
+        result.outputbits[result.length] = ident->out_bytes;
         result.length++;
     } else {
+        //counting the input bits
+        //notice that this in_bytes is not the same as the size so here the result is wrong.
+        result.inputbits[index] += ident->in_bytes;
+        result.outputbits[index] += ident->out_bytes;
         //TO DO
+        //of the ip_client ip_server
     }
 
     /*********************************************/
@@ -198,12 +205,14 @@ void display_ident(Flow *f, IdentFlow *ident) {
                         f->id.get_server_port(), f->id.get_client_port(),
                         f->id.get_protocol(), ident->start_ts,
 			ident->out_bytes, ident->in_bytes);
-
-//	printf("%s PROTOCOL NAME :%s", str,lpi_print(proto->protocol));
-
+    
+    //<old code>
+    //printf("%s", str);
+    //printf("%s\n",lpi_print(proto->protocol));
+    //show the first 4 bytes of the header
 	dump_payload(ident->lpi, 0);
 	dump_payload(ident->lpi, 1);
-//	printf("\n");
+    //	printf("\n");
 
 
 }
@@ -505,7 +514,7 @@ int main(int argc, char *argv[]) {
 	lpi_free_library();
     for(i = 0;i< result.length;i++)
     {
-        printf("PROTOCOL NUMBER : %d,PROTOCOL NAME : %s\n",i,result.name[i]);
+        printf("PROTOCOL NUMBER : %d,PROTOCOL NAME : %s,TOTAL IN:%" PRIu64 " TOTAL OUT:%" PRIu64 "\n",i,result.name[i],result.inputbits[i],result.outputbits[i]);
     }
         return 0;
 
