@@ -1,0 +1,24 @@
+#!/bin/bash
+# edited by Miguel Angel Jara Maldonado
+#
+# Execute this script as:
+#    ./nDPI_launcher_cpu_usage
+#
+# Make sure the cpu_usage is in the same folder
+# The output of cpu_usage will be stored in ndpiReader_output_CPU.txt
+
+
+./ndpiReader -i 200701090815.dump & nDPI_PID=$!
+echo "The PID of nDPI is: $nDPI_PID"
+
+./cpu_usage | tee "ndpiReader_output_CPU.txt" & cpu_Usage_PID=$!
+
+echo "The PID of the cpu_usage script is: $nDPI_PID"
+
+while ps -o pid= -p $nDPI_PID; do   #While the ndpi program is running	
+  # Wait before checking again.
+  sleep 1
+done
+echo "nDPI finished"
+
+kill $cpu_Usage_PID	#Kill the monitor script

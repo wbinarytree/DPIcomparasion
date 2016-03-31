@@ -14,7 +14,7 @@ PREV_IDLE=0
 PREV_TOTAL_MEM=0
 PREV_IDLE_MEM=0
 
-while true; do
+while true; do   #While the ndpi program is running
 
  #TIMESTAMP
   TIMESTAMP=(`date`)
@@ -42,9 +42,6 @@ while true; do
   let "DIFF_TOTAL=$TOTAL-$PREV_TOTAL"
   let "DIFF_USAGE=(1000*($DIFF_TOTAL-$DIFF_IDLE)/$DIFF_TOTAL+5)/10"
 
-
-
-
  #MEMORY
   MEM=(`free -m | grep /+`) # Get the total MEM statistics.
   unset MEM[0]                          # Discard the "-/+" prefix.
@@ -55,13 +52,9 @@ while true; do
   
   echo -en "\rCPU: $DIFF_USAGE%     USED MEM: $USED_MEM     FREE MEM: $IDLE_MEM     $TIMESTAMP_DAY $TIMESTAMP_HOUR $TIMESTAMP_ZONE $TIMESTAMP_YEAR \b\b\n"
 
-
-  # Remember the total and idle CPU times for the next check.
+  #Remember the total and idle CPU times for the next check.
   PREV_TOTAL_MEM="$TOTAL_MEM"
   PREV_IDLE_MEM="$IDLE_MEM"
-
-
-
 
   # Remember the total and idle CPU times for the next check.
   PREV_TOTAL="$TOTAL"
