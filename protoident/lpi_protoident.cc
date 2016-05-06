@@ -65,8 +65,12 @@ typedef struct res{
     unsigned int server_port[TEST_MAX];
     unsigned int client_port[TEST_MAX];
     char protocol[TEST_MAX][50];
+    int ts_protol[TEST_MAX];
     uint64_t inputbits[TEST_MAX];
     uint64_t outputbits[TEST_MAX];
+    uint32_t input_len[TEST_MAX];
+    uint32_t output_len[TEST_MAX];
+
 }res;
 
 int find_protocol_index(res result,const char* proto){
@@ -94,7 +98,7 @@ static volatile int done = 0;
 char *local_mac = NULL;
 uint8_t mac_bytes[6];
 
-res result;
+res result = {};
 
 /* This data structure is used to demonstrate how to use the 'extension' 
  * pointer to store custom data for a flow */
@@ -126,7 +130,7 @@ void init_ident_flow(Flow *f, uint8_t dir, double ts) {
 	f->extension = ident;
 }
 
-void dump_payload(lpi_data_t lpi, uint8_t dir) {
+void dump_payload(lpi_data_t lpi, uint8_t dir,int index) {
 
 	int i;
 	uint8_t *pl = (uint8_t *)(&(lpi.payload[dir]));
@@ -145,8 +149,12 @@ void dump_payload(lpi_data_t lpi, uint8_t dir) {
 		pl ++;
 	}
 
-//	printf(" %u", lpi.payload_len[dir]);
-	
+	//printf(" %u", lpi.payload_len[dir]);
+    if(dir == 0){
+        result.input_len[index] += len; 
+    }else{
+        result.output_len[index] += len;
+    }
 //	printf(" ");
 
 }
@@ -185,9 +193,11 @@ void display_ident(Flow *f, IdentFlow *ident) {
     //caculate the result
     int index = find_protocol_index(result,proto->name);
     if(-1 == index){
-        strcpy(result.name[result.length],lpi_print(proto->protocol));
+        strcpy(result.name[result.length],proto->name);//lpi_print(proto->protocol));
         result.inputbits[result.length] = ident->in_bytes;
         result.outputbits[result.length] = ident->out_bytes;
+        result.ts_protol[result.length] = f->id.get_protocol();
+        index = result.length;
         result.length++;
     } else {
         //counting the input bits
@@ -210,8 +220,8 @@ void display_ident(Flow *f, IdentFlow *ident) {
     //printf("%s", str);
     //printf("%s\n",lpi_print(proto->protocol));
     //show the first 4 bytes of the header
-	dump_payload(ident->lpi, 0);
-	dump_payload(ident->lpi, 1);
+	dump_payload(ident->lpi, 0 ,index);
+	dump_payload(ident->lpi, 1 ,index);
     //	printf("\n");
 
 
@@ -512,10 +522,41 @@ int main(int argc, char *argv[]) {
         if (!done)
 		expire_ident_flows(ts, true);
 	lpi_free_library();
-    for(i = 0;i< result.length;i++)
+    uint64_t total_udp_in = 0;
+    uint64_t total_tcp_in = 0;
+    uint64_t total_udp_out = 0;
+    uint64_t total_tcp_out = 0;
+    int input_packets = 0;
+    int output_packets = 0;
+ for(i = 0;i< result.length;i++)
     {
-        printf("PROTOCOL NUMBER : %d,PROTOCOL NAME : %s,TOTAL IN:%" PRIu64 " TOTAL OUT:%" PRIu64 "\n",i,result.name[i],result.inputbits[i],result.outputbits[i]);
+        printf("PROTOCOL NUMBER : %d,PROTOCOL NAME : %s,TOTAL IN:%" PRIu64 " TOTAL OUT:%" PRIu64 " PACKET IN:%u,PACKET OUT:%u \n",i,
+                result.name[i],
+                result.inputbits[i],
+                result.outputbits[i],
+                result.input_len[i],
+                result.output_len[i]);
+
+        if(result.ts_protol[i] == 6){
+            total_tcp_in += result.inputbits[i];
+            total_tcp_out += result.outputbits[i];
+        }else{
+            total_udp_in += result.inputbits[i];
+            total_udp_out += result.outputbits[i];
+        }
+        input_packets += result.input_len[i];
+        output_packets += result.output_len[i];
+
     }
+
+    printf("TOTAL INPUT TCP BYTE:%" PRIu64"\n",total_tcp_in);
+    printf("TOTAL INPUT UDP BYTE:%" PRIu64"\n",total_udp_in);
+    printf("TOTAL OUTPUT TCP BYTE:%" PRIu64"\n",total_tcp_out);
+    printf("TOTAL OUTPUT UDP BYTE:%" PRIu64"\n",total_udp_out);
+    printf("INPUT PACKETS:%d\n",input_packets);
+    printf("OUTPUT PACKETS:%d\n",output_packets);
+
+        
         return 0;
 
 }
